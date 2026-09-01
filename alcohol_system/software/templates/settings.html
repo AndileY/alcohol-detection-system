@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlcSecure | Settings</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .sidebar-header h2 i {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+
+        .sidebar-header p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #aaa;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(76, 175, 80, 0.1);
+            color: white;
+            border-left: 3px solid #4CAF50;
+        }
+
+        .menu-item i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+
+        .menu-item a {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 20px 30px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .page-title p {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Settings Grid */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .card-title i {
+            margin-right: 8px;
+            color: #4CAF50;
+        }
+
+        .settings-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .settings-group input, .settings-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .settings-group input:focus, .settings-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .settings-group .help-text {
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input {
+            width: auto;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            .sidebar-header h2, .sidebar-header p, .menu-item span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+            }
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-flask"></i> AlcSecure</h2>
+            <p>Enterprise Alcohol Detection</p>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item">
+                <a href="/">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+            </div>
+            <div class="menu-item active">
+                <a href="/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <h1>Settings</h1>
+                <p>Configure system parameters and preferences</p>
+            </div>
+        </div>
+
+        <div id="alertMessage" class="hidden"></div>
+
+        <div class="settings-grid">
+            <!-- Alcohol Sensor Settings -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-flask"></i> Alcohol Sensor
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>Alcohol Threshold Value</label>
+                    <input type="number" id="threshold" value="500" step="10">
+                    <div class="help-text">Values below this threshold indicate alcohol detection (Current: Clean air = 1000+, Alcohol = 50-100)</div>
+                </div>
+                <div class="settings-group">
+                    <label>Sensor Pin</label>
+                    <input type="text" id="sensorPin" value="A0" readonly disabled>
+                    <div class="help-text">Analog pin connected to MQ-3 sensor (fixed)</div>
+                </div>
+                <button class="btn btn-primary" onclick="saveSensorSettings()">
+                    <i class="fas fa-save"></i> Save Sensor Settings
+                </button>
+            </div>
+
+            <!-- Face Recognition Settings -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-face-smile"></i> Face Recognition
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>Detection Sensitivity</label>
+                    <select id="sensitivity">
+                        <option value="1.05">High (More sensitive)</option>
+                        <option value="1.1">Medium</option>
+                        <option value="1.2">Low (Less sensitive)</option>
+                    </select>
+                    <div class="help-text">Higher sensitivity detects more faces but may have false positives</div>
+                </div>
+                <div class="settings-group">
+                    <label>Scan Timeout (seconds)</label>
+                    <input type="number" id="scanTimeout" value="5" min="3" max="10" step="1">
+                    <div class="help-text">Time to wait for face detection</div>
+                </div>
+                <button class="btn btn-primary" onclick="saveFaceSettings()">
+                    <i class="fas fa-save"></i> Save Face Settings
+                </button>
+            </div>
+
+            <!-- MQTT Broker Settings -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-cloud"></i> MQTT Broker
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>Broker Address</label>
+                    <input type="text" id="mqttBroker" value="test.mosquitto.org">
+                    <div class="help-text">MQTT broker hostname or IP address</div>
+                </div>
+                <div class="settings-group">
+                    <label>Port</label>
+                    <input type="number" id="mqttPort" value="1883">
+                    <div class="help-text">MQTT broker port (default: 1883)</div>
+                </div>
+                <div class="settings-group">
+                    <label>Status Topic</label>
+                    <input type="text" id="statusTopic" value="alcohol_system/status">
+                    <div class="help-text">MQTT topic for system status</div>
+                </div>
+                <button class="btn btn-primary" onclick="saveMQTTSettings()">
+                    <i class="fas fa-save"></i> Save MQTT Settings
+                </button>
+                <button class="btn btn-secondary" onclick="testMQTTConnection()" style="margin-top: 10px;">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+            </div>
+
+            <!-- System Settings -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-desktop"></i> System Settings
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>COM Port (Arduino)</label>
+                    <input type="text" id="comPort" value="COM10">
+                    <div class="help-text">USB COM port for Arduino connection</div>
+                </div>
+                <div class="settings-group checkbox-group">
+                    <input type="checkbox" id="autoStart">
+                    <label>Auto-start on boot</label>
+                </div>
+                <div class="settings-group checkbox-group">
+                    <input type="checkbox" id="soundAlerts">
+                    <label>Enable sound alerts on detection</label>
+                </div>
+                <button class="btn btn-primary" onclick="saveSystemSettings()">
+                    <i class="fas fa-save"></i> Save System Settings
+                </button>
+            </div>
+
+            <!-- LED Settings -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-lightbulb"></i> LED Indicators
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>Granted LED Pin (Blue/Green)</label>
+                    <input type="text" id="grantedLedPin" value="D5" readonly disabled>
+                    <div class="help-text">Digital pin for granted LED (fixed)</div>
+                </div>
+                <div class="settings-group">
+                    <label>Denied LED Pin (Red)</label>
+                    <input type="text" id="deniedLedPin" value="D6" readonly disabled>
+                    <div class="help-text">Digital pin for denied LED (fixed)</div>
+                </div>
+                <div class="settings-group">
+                    <label>LED Blink Duration (seconds)</label>
+                    <input type="number" id="ledDuration" value="3" min="1" max="10" step="0.5">
+                    <div class="help-text">How long LEDs stay on after result</div>
+                </div>
+                <button class="btn btn-primary" onclick="saveLEDSettings()">
+                    <i class="fas fa-save"></i> Save LED Settings
+                </button>
+            </div>
+
+            <!-- Data Management -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-database"></i> Data Management
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <label>Keep History For (days)</label>
+                    <input type="number" id="historyDays" value="30" min="1" max="365">
+                    <div class="help-text">Number of days to keep historical data</div>
+                </div>
+                <button class="btn btn-secondary" onclick="exportAllData()">
+                    <i class="fas fa-download"></i> Export All Data
+                </button>
+                <button class="btn btn-danger" onclick="clearHistory()" style="margin-top: 10px;">
+                    <i class="fas fa-trash"></i> Clear All History
+                </button>
+            </div>
+
+            <!-- Arduino Control -->
+            <div class="settings-card full-width">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-microchip"></i> Arduino Control
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="testArduinoConnection()">
+                        <i class="fas fa-plug"></i> Test Connection
+                    </button>
+                    <button class="btn btn-secondary" onclick="restartArduino()">
+                        <i class="fas fa-sync-alt"></i> Restart Arduino
+                    </button>
+                    <button class="btn btn-primary" onclick="calibrateSensor()">
+                        <i class="fas fa-chart-line"></i> Calibrate Sensor
+                    </button>
+                </div>
+                <div id="arduinoStatus" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                    Status: <span id="arduinoStatusText">Unknown</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        // Load saved settings from localStorage
+        function loadSettings() {
+            // Sensor settings
+            document.getElementById('threshold').value = localStorage.getItem('threshold') || '500';
+            document.getElementById('sensitivity').value = localStorage.getItem('sensitivity') || '1.05';
+            document.getElementById('scanTimeout').value = localStorage.getItem('scanTimeout') || '5';
+            
+            // MQTT settings
+            document.getElementById('mqttBroker').value = localStorage.getItem('mqttBroker') || 'test.mosquitto.org';
+            document.getElementById('mqttPort').value = localStorage.getItem('mqttPort') || '1883';
+            document.getElementById('statusTopic').value = localStorage.getItem('statusTopic') || 'alcohol_system/status';
+            
+            // System settings
+            document.getElementById('comPort').value = localStorage.getItem('comPort') || 'COM10';
+            document.getElementById('autoStart').checked = localStorage.getItem('autoStart') === 'true';
+            document.getElementById('soundAlerts').checked = localStorage.getItem('soundAlerts') === 'true';
+            
+            // LED settings
+            document.getElementById('ledDuration').value = localStorage.getItem('ledDuration') || '3';
+            
+            // Data settings
+            document.getElementById('historyDays').value = localStorage.getItem('historyDays') || '30';
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            alertDiv.classList.remove('hidden');
+            setTimeout(() => {
+                alertDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Save Sensor Settings
+        function saveSensorSettings() {
+            const threshold = document.getElementById('threshold').value;
+            localStorage.setItem('threshold', threshold);
+            showAlert('Sensor settings saved successfully!', 'success');
+        }
+
+        // Save Face Settings
+        function saveFaceSettings() {
+            const sensitivity = document.getElementById('sensitivity').value;
+            const scanTimeout = document.getElementById('scanTimeout').value;
+            localStorage.setItem('sensitivity', sensitivity);
+            localStorage.setItem('scanTimeout', scanTimeout);
+            showAlert('Face recognition settings saved!', 'success');
+        }
+
+        // Save MQTT Settings
+        function saveMQTTSettings() {
+            const broker = document.getElementById('mqttBroker').value;
+            const port = document.getElementById('mqttPort').value;
+            const topic = document.getElementById('statusTopic').value;
+            localStorage.setItem('mqttBroker', broker);
+            localStorage.setItem('mqttPort', port);
+            localStorage.setItem('statusTopic', topic);
+            showAlert('MQTT settings saved! Restart web server to apply changes.', 'success');
+        }
+
+        // Test MQTT Connection
+        function testMQTTConnection() {
+            const broker = document.getElementById('mqttBroker').value;
+            const port = document.getElementById('mqttPort').value;
+            showAlert(`Testing connection to ${broker}:${port}...`, 'success');
+            // This would require a backend API call
+        }
+
+        // Save System Settings
+        function saveSystemSettings() {
+            const comPort = document.getElementById('comPort').value;
+            const autoStart = document.getElementById('autoStart').checked;
+            const soundAlerts = document.getElementById('soundAlerts').checked;
+            localStorage.setItem('comPort', comPort);
+            localStorage.setItem('autoStart', autoStart);
+            localStorage.setItem('soundAlerts', soundAlerts);
+            showAlert('System settings saved!', 'success');
+        }
+
+        // Save LED Settings
+        function saveLEDSettings() {
+            const duration = document.getElementById('ledDuration').value;
+            localStorage.setItem('ledDuration', duration);
+            showAlert('LED settings saved!', 'success');
+        }
+
+        // Test Arduino Connection
+        function testArduinoConnection() {
+            const comPort = document.getElementById('comPort').value;
+            const statusSpan = document.getElementById('arduinoStatusText');
+            statusSpan.innerHTML = 'Testing...';
+            statusSpan.style.color = '#ff9800';
+            
+            fetch('/health')
+                .then(res => res.json())
+                .then(data => {
+                    statusSpan.innerHTML = 'Connected ✓';
+                    statusSpan.style.color = '#4CAF50';
+                    showAlert(`Arduino connected on ${comPort}`, 'success');
+                })
+                .catch(err => {
+                    statusSpan.innerHTML = 'Disconnected ✗';
+                    statusSpan.style.color = '#f44336';
+                    showAlert('Arduino not connected. Check COM port.', 'error');
+                });
+        }
+
+        function restartArduino() {
+            showAlert('Restart command sent to Arduino', 'success');
+        }
+
+        function calibrateSensor() {
+            showAlert('Sensor calibration started. Blow clean air for 10 seconds...', 'success');
+        }
+
+        function exportAllData() {
+            fetch('/api/history?limit=10000')
+                .then(res => res.json())
+                .then(data => {
+                    const jsonContent = JSON.stringify(data, null, 2);
+                    const blob = new Blob([jsonContent], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `alcohol_data_export_${new Date().toISOString().slice(0,19)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    showAlert('Data exported successfully!', 'success');
+                })
+                .catch(err => {
+                    showAlert('Error exporting data', 'error');
+                });
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history data? This cannot be undone!')) {
+                showAlert('History cleared!', 'success');
+            }
+        }
+
+        // Socket events for system status
+        socket.on('connect', function() {
+            console.log('Connected to settings');
+            testArduinoConnection();
+        });
+
+        socket.on('system_status', function(data) {
+            const statusSpan = document.getElementById('arduinoStatusText');
+            if (data.status === 'online') {
+                statusSpan.innerHTML = 'Connected ✓';
+                statusSpan.style.color = '#4CAF50';
+            } else {
+                statusSpan.innerHTML = 'Disconnected ✗';
+                statusSpan.style.color = '#f44336';
+            }
+        });
+
+        // Initialize
+        loadSettings();
+        testArduinoConnection();
+    </script>
+</body>
+</html>

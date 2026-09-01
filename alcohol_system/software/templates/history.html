@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlcSecure | History</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .sidebar-header h2 i {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+
+        .sidebar-header p {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #aaa;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(76, 175, 80, 0.1);
+            color: white;
+            border-left: 3px solid #4CAF50;
+        }
+
+        .menu-item i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+
+        .menu-item a {
+            color: inherit;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 20px 30px;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-title h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .page-title p {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Filters */
+        .filters-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select, .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        /* Stats Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-summary-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-summary-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge-granted {
+            background: #e8f5e9;
+            color: #4CAF50;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-denied {
+            background: #ffebee;
+            color: #f44336;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .page-btn.active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .page-btn:hover:not(.active) {
+            background: #f0f2f5;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+            }
+            .sidebar-header h2, .sidebar-header p, .menu-item span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 70px;
+            }
+            .stats-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .history-table {
+                font-size: 0.75rem;
+            }
+            .history-table th, .history-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-flask"></i> AlcSecure</h2>
+            <p>Enterprise Alcohol Detection</p>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item">
+                <a href="/">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </div>
+            <div class="menu-item active">
+                <a href="/history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <h1>Test History</h1>
+                <p>View and export all alcohol test records</p>
+            </div>
+            <div class="export-buttons">
+                <button class="btn btn-secondary" onclick="exportCSV()">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+                <button class="btn btn-primary" onclick="exportJSON()">
+                    <i class="fas fa-code"></i> Export JSON
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-card">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> Date From</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-calendar"></i> Date To</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-filter"></i> Result</label>
+                    <select id="resultFilter">
+                        <option value="all">All Results</option>
+                        <option value="GRANTED">Granted (Sober)</option>
+                        <option value="DENIED">Denied (Alcohol)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-chart-line"></i> Min BAC %</label>
+                    <input type="number" id="minBAC" placeholder="0" step="1">
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-chart-line"></i> Max BAC %</label>
+                    <input type="number" id="maxBAC" placeholder="100" step="1">
+                </div>
+                <div class="filter-group">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                    <button class="btn" onclick="clearFilters()" style="background:#f0f2f5;">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="stats-summary" id="statsSummary">
+            <div class="stat-summary-card">
+                <div class="stat-summary-value" id="totalTests">0</div>
+                <div class="stat-summary-label">Total Tests</div>
+            </div>
+            <div class="stat-summary-card">
+                <div class="stat-summary-value" id="grantedTests" style="color:#4CAF50;">0</div>
+                <div class="stat-summary-label">Granted</div>
+            </div>
+            <div class="stat-summary-card">
+                <div class="stat-summary-value" id="deniedTests" style="color:#f44336;">0</div>
+                <div class="stat-summary-label">Denied</div>
+            </div>
+            <div class="stat-summary-card">
+                <div class="stat-summary-value" id="avgBAC">0%</div>
+                <div class="stat-summary-label">Average BAC</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Date</th>
+                        <th>BAC %</th>
+                        <th>Raw Value</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align: center;">Loading history...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        let allRecords = [];
+        let filteredRecords = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        // Load history from API
+        function loadHistory() {
+            fetch('/api/history?limit=500')
+                .then(res => res.json())
+                .then(data => {
+                    allRecords = [];
+                    if (data.timestamps && data.timestamps.length > 0) {
+                        for (let i = 0; i < data.timestamps.length; i++) {
+                            allRecords.push({
+                                time: data.timestamps[i],
+                                date: new Date().toLocaleDateString(),
+                                percentage: data.percentages[i],
+                                raw_value: data.raw_values[i],
+                                result: data.results[i]
+                            });
+                        }
+                    }
+                    applyFilters();
+                })
+                .catch(err => console.error('Error loading history:', err));
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const resultFilter = document.getElementById('resultFilter').value;
+            const minBAC = parseInt(document.getElementById('minBAC').value) || 0;
+            const maxBAC = parseInt(document.getElementById('maxBAC').value) || 100;
+
+            filteredRecords = allRecords.filter(record => {
+                if (resultFilter !== 'all' && record.result !== resultFilter) return false;
+                if (record.percentage < minBAC) return false;
+                if (record.percentage > maxBAC) return false;
+                return true;
+            });
+
+            updateStats();
+            currentPage = 1;
+            renderTable();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('resultFilter').value = 'all';
+            document.getElementById('minBAC').value = '';
+            document.getElementById('maxBAC').value = '';
+            applyFilters();
+        }
+
+        // Update statistics summary
+        function updateStats() {
+            const total = filteredRecords.length;
+            const granted = filteredRecords.filter(r => r.result === 'GRANTED').length;
+            const denied = filteredRecords.filter(r => r.result === 'DENIED').length;
+            const avgBAC = total > 0 ? (filteredRecords.reduce((sum, r) => sum + r.percentage, 0) / total).toFixed(1) : 0;
+
+            document.getElementById('totalTests').innerText = total;
+            document.getElementById('grantedTests').innerText = granted;
+            document.getElementById('deniedTests').innerText = denied;
+            document.getElementById('avgBAC').innerText = avgBAC + '%';
+        }
+
+        // Render table with pagination
+        function renderTable() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageRecords = filteredRecords.slice(start, end);
+            const tbody = document.getElementById('historyTableBody');
+
+            if (pageRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No records found</td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            tbody.innerHTML = pageRecords.map(record => `
+                <tr>
+                    <td>${record.time || '--:--:--'}</td>
+                    <td>${record.date || '---'}</td>
+                    <td><strong>${record.percentage}%</strong></td>
+                    <td>${record.raw_value || '---'}</td>
+                    <td>
+                        <span class="badge-${record.result === 'GRANTED' ? 'granted' : 'denied'}">
+                            ${record.result === 'GRANTED' ? '✅ GRANTED' : '❌ DENIED'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination();
+        }
+
+        // Render pagination controls
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+            const paginationDiv = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                paginationDiv.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            for (let i = 1; i <= Math.min(totalPages, 10); i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            paginationDiv.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderTable();
+        }
+
+        // Export to CSV
+        function exportCSV() {
+            if (filteredRecords.length === 0) {
+                alert('No records to export');
+                return;
+            }
+
+            const headers = ['Time', 'Date', 'BAC %', 'Raw Value', 'Result'];
+            const rows = filteredRecords.map(r => [
+                r.time,
+                r.date,
+                r.percentage,
+                r.raw_value,
+                r.result
+            ]);
+
+            const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alcohol_history_${new Date().toISOString().slice(0,19)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Export to JSON
+        function exportJSON() {
+            if (filteredRecords.length === 0) {
+                alert('No records to export');
+                return;
+            }
+
+            const jsonContent = JSON.stringify(filteredRecords, null, 2);
+            const blob = new Blob([jsonContent], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alcohol_history_${new Date().toISOString().slice(0,19)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Real-time update when new test comes in
+        socket.on('connect', function() {
+            console.log('Connected to history');
+            loadHistory();
+        });
+
+        socket.on('history_update', function(data) {
+            loadHistory();
+        });
+
+        // Initial load
+        loadHistory();
+    </script>
+</body>
+</html>
