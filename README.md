@@ -2,12 +2,12 @@
 
 Click the copy button in the top-right corner of the code block below to copy everything:
 
-```text
+
 # Alcohol Detection System
 
 Complete alcohol detection system with Arduino KS0397, face recognition, and real-time web dashboard with MQTT integration.
 
----
+
 
 ## 📋 Project Overview
 
@@ -18,7 +18,7 @@ Complete alcohol detection system with Arduino KS0397, face recognition, and rea
 - **MQTT:** test.mosquitto.org
 - **Communication:** Serial (USB) + MQTT
 
----
+
 
 ## 🧪 Hardware Requirements
 
@@ -28,7 +28,7 @@ Complete alcohol detection system with Arduino KS0397, face recognition, and rea
 - 1x Push Button
 - USB Cable
 
----
+
 
 ## 🔧 Software Requirements
 
@@ -39,7 +39,7 @@ Complete alcohol detection system with Arduino KS0397, face recognition, and rea
 - paho-mqtt
 - Socket.IO
 
----
+
 
 ## 🚀 Getting Started
 
